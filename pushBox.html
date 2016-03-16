@@ -1,0 +1,343 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta charset="utf8">
+<style type="text/css">
+     td{
+      display: block; 
+      width: 40px;
+      height: 40px;
+      background-color: green;
+      text-align: center;
+      font-size: 20px;
+      margin: 1px;
+      float: left;
+      text-indent: -5000px;}   
+ button{
+      	display: block;
+      	width: 60px;
+      	height: 40px;
+      	font-size: 15px;
+      	}
+#butt1 button{
+	display: block;
+	float: left;
+}
+#butt{
+	position: absolute;
+	left:550px;
+	top: 100px;
+}
+#left{
+	position: relative;
+	left: -60px;
+	top:-60px;
+}
+#right{
+	position: relative;
+	left: 60px;
+	top:-100px;
+}
+</style>
+
+</head>
+
+<body onload="bianse()">
+	<div id="_table"></div>
+	 <div id="butt1">
+	<button id="blue1">set people</button>
+	<button id="red1">set end</button>
+	<button id="black1">set barrier</button>
+	<button id="yellow1">set box</button> 
+	<button id="StartGo" onclick="ready()">ready!</button> 
+	</div>
+	<div id="butt">
+	<button id="up" onclick="PushBox('_up')">up</button> 
+	<button id="down" onclick="PushBox('_down')">down</button> 
+	<button id="left" onclick="PushBox('_left')">left</button> 
+	<button id="right" onclick="PushBox('_right')">right</button> 
+	</div>
+</body>
+<script src="http://libs.baidu.com/jquery/1.9.0/jquery.js"></script>
+<script>
+	DrawMap();
+	var end_number=0;
+	var Map=[
+			[1,1,1,1,1,1,1,1,1,1,1],
+			[1,1,1,1,1,1,1,1,1,1,1],
+			[1,1,1,1,1,1,1,1,1,1,1],
+			[1,1,1,1,1,1,1,1,1,1,1],
+			[1,1,1,1,1,1,1,1,1,1,1],
+			[1,1,1,1,1,1,1,1,1,1,1],
+			[1,1,1,1,1,1,1,1,1,1,1],
+			[1,1,1,1,1,1,1,1,1,1,1],
+			[1,1,1,1,1,1,1,1,1,1,1],
+			[1,1,1,1,1,1,1,1,1,1,1]];
+	var hang=10;
+	var lie=10;
+	function DrawMap() {
+		var i,j;
+		var a,b;
+		var str;
+		str='<table class="map">';
+			for(i=0;i<10;i++)
+			{
+			a="x"+i;
+			str+="<tr class="+a+">";
+				for(j=0;j<10;j++)
+				{
+				b="y"+j;
+				str+="<td class="+b+">1</td>";
+				}
+			str+="</tr>";
+			}
+		str+="</table>";
+		document.getElementById("_table").innerHTML=str;}
+	/*var Direction;*/
+	/*初始化格子*/
+	function Gezi (x,y) {
+		this.x=x;
+		this.y=y;
+		this.ifbox=0;
+		this.ifend=0;
+		this.ifperson=0;
+		this.boxstyle=0;
+		this.ifblank=0;
+		this.num=0;
+		this._up=null;
+		this._down=null;
+		this._right=null;
+		this._left=null;}
+	/*初始化地图格子为对象*/
+	function Resetbox(){
+		var i,j;
+		var num;
+		for(i=0;i<hang;i++)
+		{
+			for(j=0;j<lie;j++)
+			{
+				num=Map[i][j];
+				Map[i][j]=new Gezi(i,j);
+				Map[i][j].num=num;
+				/*待加入:判断并设置格子样式*/
+				switch( Map[i][j].num)
+				{	/*1:空白 2:箱子 3:人 4:终点 0:障碍*/
+					case 0: Map[i][j].boxstyle=0; break;
+					case 1: Map[i][j].boxstyle=1;Map[i][j].ifblank=1; break;
+					case 2: Map[i][j].boxstyle=1;Map[i][j].ifbox=1; break;
+					case 3: Map[i][j].boxstyle=1;Map[i][j].ifperson=1; break;
+					case 4: Map[i][j].boxstyle=1;Map[i][j].ifend=1; break;
+				}
+			}	
+		}}
+	/*为格子对象设置下一步格子*/
+	function NextBox(){
+		var i,j;
+		for(i=0;i<hang;i++)
+		{
+			for(j=0;j<lie;j++)
+			{	
+				if(i-1>=0){Map[i][j]._up=Map[i-1][j];}else{Map[i][j]._up=null}
+				if(i+1<hang){Map[i][j]._down=Map[i+1][j];}else{Map[i][j]._down=null}
+				if(j+1<lie){Map[i][j]._right=Map[i][j+1];}else{Map[i][j]._right=null}
+				if(j-1>=0){Map[i][j]._left=Map[i][j-1];}else{Map[i][j]._left=null}
+			}
+		}}
+	/*获取人的位置*/
+	function GetPersonPosition(){
+		var i,j;
+		var a=[];
+		for(i=0;i<hang;i++)
+		{
+			for(j=0;j<lie;j++)
+			{
+				if(Map[i][j].ifperson==1)
+				{
+					a[0]=i;
+					a[1]=j;
+					return a;
+				}
+			}
+		}}
+	/*按钮：移动事件*/
+	function PushBox(Next){
+		var next;
+		if(Next=="_up")
+		{next="_up";}
+		if(Next=="_down")
+		{next="_down";}
+		if(Next=="_left")
+		{next="_left";}
+		if(Next=="_right")
+		{next="_right";}
+		var p=[];
+		p=GetPersonPosition();
+		var a,b;
+		a=p[0];
+		b=p[1];
+		/*Map[a][b]为人当前的位置*/
+		if(Map[a][b][next]==null){return 0;}             /*下一格非法时*/
+		if(Map[a][b][next].boxstyle===0) {return 0;}     /*下一格为障碍时*/
+		if(Map[a][b][next].boxstyle===1)                 /*下一格可行时*/
+		{
+			if(Map[a][b][next].ifbox===1)
+			{
+				if(Map[a][b][next][next].ifbox==1){return 0};
+				if(Map[a][b][next][next]==null){return 0;}
+				if(Map[a][b][next][next].boxstyle===0){return 0;}
+				if(Map[a][b][next][next].ifblank===1||Map[a][b][next][next].ifperson===0||Map[a][b][next][next].ifend===1)
+				{
+					Map[a][b].ifperson=0;
+					$("."+"x"+a+" "+"."+"y"+b).css("background-color","green");
+					Map[a][b][next].ifperson=1;
+					$("."+"x"+Map[a][b][next].x+" "+"."+"y"+Map[a][b][next].y).css("background-color","blue");
+					Map[a][b][next][next].ifbox=1;
+					$("."+"x"+Map[a][b][next][next].x+" "+"."+"y"+Map[a][b][next][next].y).css("background-color","yellow");
+					Map[a][b][next].ifbox=0;
+					/*放置显示代码 $("p").css("background-color","yellow");*/
+				}
+			}
+			if(Map[a][b][next].ifblank===1||Map[a][b][next].ifperson===0||Map[a][b][next].ifend===1)		/*下一格空白时*/
+			{
+				Map[a][b].ifperson=0;
+				$("."+"x"+a+" "+"."+"y"+b).css("background-color","green");
+				Map[a][b][next].ifperson=1;
+				$("."+"x"+Map[a][b][next].x+" "+"."+"y"+Map[a][b][next].y).css("background-color","blue");
+				/*放置显示代码*/
+			}
+		}
+		endcolor();
+		FinishDone();
+		}
+	function bianse(){
+		var color='green';
+		$('.map').delegate('td', 'click', function (){
+		$(this).css('background', color);
+		if(color==="red")     /*终点【红色】*/
+		{$(this).text("4")}
+		if(color==="blue")    /*人【蓝色】*/
+		{$(this).text("3")}
+		if(color==="black")   /*栅栏【黑色】*/
+		{$(this).text("0")}
+		if(color==="yellow")    /*箱子【黄色】*/
+		{$(this).text("2")}
+		})
+		$('#red1').click(function () {
+		color = 'red';
+		});
+		$('#blue1').click(function () {
+		color = 'blue';
+		});
+		$('#black1').click(function () {
+		color = 'black';
+		});
+		$('#yellow1').click(function () {
+		color = 'yellow';
+		});}
+	function ready(){
+		var i,j;
+		var c;
+		var _people=0;
+		var _box=0;
+		var _end=0;
+		for(i=0;i<hang;i++)
+		      {
+		        for(j=0;j<lie;j++)
+		        {
+		          c="."+"x"+i+" "+"."+"y"+j;
+		          Map[i][j]=parseInt($(c).text());
+		         if(Map[i][j]==3)
+			{
+				_people+=1;
+			}
+			if(Map[i][j]==2)
+			{
+				_box+=1;
+			}
+			if(Map[i][j]==4)
+			{
+				_end+=1;
+			}
+		        }
+		      }
+		      if(_people===0||_people>1)
+		      	{
+		      		alert("where is your people?");
+		      		return 0;}
+		      if(_box===0)
+		      {
+		      	alert("where is your box?");
+		      	return 0;
+		      }
+		      if(_end===0)
+		      {
+		      	alert("where is your end?");
+		      	return 0;
+		      }
+		      if(_end!==_box)
+		     {alert("your box and end is not same");}
+
+		      	Resetbox();
+			NextBox();
+		  }
+	function endcolor(){
+	  	var i,j;
+			for(i=0;i<hang;i++)
+			{	for(j=0;j<lie;j++)
+				{
+					if(Map[i][j].ifperson==0&&Map[i][j].ifbox==0)
+					{
+						if(Map[i][j].ifend==1)
+						{
+							$("."+"x"+i+" "+"."+"y"+j).css("background-color","red");
+						}
+					}
+					if(Map[i][j].ifbox==1&&Map[i][j].ifend==1)
+					{
+						$("."+"x"+i+" "+"."+"y"+j).css("background-color","gray");
+					}
+				}
+			}
+	  }
+	function FinishDone(){
+		var i,j;
+		var result;
+		result=0;
+		end_number=0;
+		for(i=0;i<hang;i++)
+		{
+			for(j=0;j<lie;j++)
+			{	
+				if(Map[i][j].ifend===1)
+				{end_number+=1;}
+			}
+		}
+		for(i=0;i<hang;i++)
+		{
+			for(j=0;j<lie;j++)
+			{	
+				if(Map[i][j].ifend===1)
+				{
+					if(Map[i][j].ifbox===1)
+					{	
+						result+=1;
+					}
+				}
+			}
+		}
+		var ji;
+		if(result===end_number)
+		{
+			alert("success!");
+			for(i=0;i<hang;i++)
+			{
+				for(j=0;j<lie;j++)
+				{
+					ji="."+"x"+i+" "+"."+"y"+j;
+					$(ji).text("1");
+					$(ji).css("background-color","green");
+				}
+			}
+		}}
+</script>
+</html>
